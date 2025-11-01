@@ -36,8 +36,11 @@ def generar_qr():
 
 def generar_qr_desde_imagen():
     file_path = filedialog.askopenfilename(
-        filetypes=[("Imágenes", "*.png *.jpg *.jpeg *.bmp *.gif *.webp")],
-        title="Seleccionar imagen"
+        title="Seleccionar imagen",
+        filetypes=[
+            ("Imágenes", "*.png *.jpg *.jpeg *.bmp *.gif *.webp"),
+            ("Todos los archivos", "*.*")
+        ]
     )
 
     if not file_path:
@@ -49,20 +52,36 @@ def generar_qr_desde_imagen():
     img.save(buffer, format="PNG")
     tamanio_kb = len(buffer.getvalue()) / 1024
 
-    if tamanio_kb > 300:
-        if messagebox.askyesno("Imagen grande", f"La imagen pesa {tamanio_kb:.1f} KB.\n¿Reducirla para que funcione?"):
-            img.thumbnail((400, 400))
+    # Máximo 200KB para QR estable
+    max_kb = 200
+
+    if tamanio_kb > max_kb:
+        if messagebox.askyesno(
+            "Imagen grande",
+            f"La imagen pesa {tamanio_kb:.1f} KB.\n¿Comprimir para que funcione en el QR?"
+        ):
+            # Reducir resolución
+            img.thumbnail((300, 300))
+
+            # Convertir a JPEG y comprimir
+            buffer = BytesIO()
+            img.save(buffer, format="JPEG", optimize=True, quality=40)
+
         else:
             messagebox.showwarning("Cancelado", "La imagen es demasiado grande para usar en un QR.")
             return
 
+    # Convertir a base64
     buffer = BytesIO()
-    img.save(buffer, format="PNG")
+    img.save(buffer, format="JPEG", optimize=True, quality=40)
     base64_img = base64.b64encode(buffer.getvalue()).decode()
 
-    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_L)
+    qr = qrcode.QRCode(
+        error_correction=qrcode.constants.ERROR_CORRECT_M  # un poco más de capacidad
+    )
     qr.add_data(base64_img)
     qr.make(fit=True)
+
     img_qr = qr.make_image(fill_color="black", back_color="white")
 
     save_path = filedialog.asksaveasfilename(
@@ -70,9 +89,11 @@ def generar_qr_desde_imagen():
         filetypes=[("PNG files", "*.png")],
         title="Guardar QR desde imagen"
     )
+
     if save_path:
         img_qr.save(save_path)
         messagebox.showinfo("Éxito", f"QR generado desde imagen guardado en:\n{save_path}")
+
 
 def actualizar_programa():
     try:
