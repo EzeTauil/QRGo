@@ -36,7 +36,7 @@ def generar_qr():
 
 def generar_qr_desde_imagen():
     file_path = filedialog.askopenfilename(
-        filetypes=[("Imágenes", "*.png;*.jpg;*.jpeg;*.bmp;*.gif")],
+        filetypes=[("Imágenes", "*.png *.jpg *.jpeg *.bmp *.gif *.webp")],
         title="Seleccionar imagen"
     )
 
